@@ -15,12 +15,13 @@ class TodoItem:
     metadata: {str: str} = None
     creation_date: dt.date = None
     completion_date: dt.date = None
+    priority: str = None
 
 
 class TodoLexer(sly.Lexer):
     tokens = {
-        # X,
-        # PRIORITY,
+        X,
+        PRIORITY,
         DATE,
         PROJECT_TAG,
         CONTEXT_TAG,
@@ -30,8 +31,8 @@ class TodoLexer(sly.Lexer):
 
     ignore = " \t\n\r"
 
-    # X = r"x"
-    # PRIORITY = r"\([A-Z]\)"
+    X = r"x"
+    PRIORITY = r"\([A-Z]\)"
     DATE = r"\d{4}-\d{2}-\d{2}"
     PROJECT_TAG = r"\+\w+"
     CONTEXT_TAG = r"@\w+"
@@ -47,109 +48,121 @@ class TodoLexer(sly.Lexer):
         token.value = dt.date.fromisoformat(token.value)
         return token
 
+    def PRIORITY(self, token):
+        token.value = token.value[1]
+        return token
+
 
 class TodoParser(sly.Parser):
     tokens = TodoLexer.tokens
 
     start = "todo"
 
-    # @_("X desctiption")
-    # def todo(self, p):
-    #     pass
-
-    # @_("PRIORITY desctiption")
-    # def todo(self, p):
-    #     pass
-
-    # @_("DATE DATE description")
-    # def todo(self, p):
-    #     todo_item = p.description
-    #     todo_item.completion_date = p.DATE0
-    #     todo_item.creation_date = p.DATE1
-    #     return todo_item
-
-    # @_("DATE description")
-    # def todo(self, p):
-    #     todo_item = p.description
-    #     todo_item.creation_date = p.DATE
-    #     return todo_item
+    @_("description")
+    def todo(self, p):
+        return TodoItem(
+            **p.description,
+        )
 
     @_("header description")
     def todo(self, p):
-        pass
-        # return p.description
+        return TodoItem(
+            **p.header,
+            **p.description,
+        )
 
-    @_("description")
+    @_("description tags")
     def todo(self, p):
-        return p.description
+        return TodoItem(
+            **p.description,
+            **p.tags,
+        )
+
+    @_("header description tags")
+    def todo(self, p):
+        return TodoItem(
+            **p.header,
+            **p.description,
+            **p.tags,
+        )
 
     @_("X PRIORITY")
     def header(self, p):
-        pass
+        return {
+            "done": True,
+            "priority": p.PRIORITY,
+        }
 
     @_("X dates")
     def header(self, p):
-        pass
+        return {
+            "done": True,
+            **p.dates,
+        }
 
     @_("X PRIORITY dates")
     def header(self, p):
-        pass
+        return {
+            "done": True,
+            "priority": p.PRIORITY,
+            **p.dates,
+        }
 
     @_("PRIORITY dates")
     def header(self, p):
-        pass
+        return {
+            "priority": p.PRIORITY,
+            **p.dates,
+        }
 
     @_("X")
     def header(self, p):
-        pass
+        return {
+            "done": True,
+        }
 
     @_("PRIORITY")
     def header(self, p):
-        pass
+        return {
+            "priority": p.PRIORITY,
+        }
 
     @_("dates")
     def header(self, p):
-        pass
+        return {
+            **p.dates,
+        }
 
     @_("DATE")
     def dates(self, p):
-        pass
+        return {
+            "completion_date": p.DATE,
+        }
 
     @_("DATE DATE")
     def dates(self, p):
-        pass
-
-    @_("words tags")
-    def description(self, p):
-        return TodoItem(
-            description=p.words,
-            context_tags=p.tags.get("context_tags", []),
-            project_tags=p.tags.get("project_tags", []),
-            metadata=p.tags.get("metadata", {}),
-        )
+        return {
+            "creation_date": p.DATE0,
+            "completion_date": p.DATE1,
+        }
 
     @_("words")
     def description(self, p):
-        return TodoItem(description=p.words)
+        return {
+            "description": p.words
+        }
 
-    @_("PROJECT_TAG tags")
-    def tags(self, p):
-        result = p.tags
-        result.setdefault("project_tags", []).append(p.PROJECT_TAG)
-        return result
+    @_("WORD words")
+    def words(self, p):
+        return [p.WORD] + p.words
 
-    @_("CONTEXT_TAG tags")
-    def tags(self, p):
-        result = p.tags
-        result.setdefault("context_tags", []).append(p.CONTEXT_TAG)
-        return result
+    @_("WORD")
+    def words(self, p):
+        return [p.WORD]
 
-    @_("METADATA tags")
+    @_("tags tags")
     def tags(self, p):
-        result = p.tags
-        key, value = p.METADATA.split(":")
-        result.setdefault("metadata", {})[key] = value
-        return result
+        return {**p.tags0, **p.tags1}
 
     @_("PROJECT_TAG")
     def tags(self, p):
@@ -162,14 +175,6 @@ class TodoParser(sly.Parser):
     @_("METADATA")
     def tags(self, p):
         return {"metadata": p.METADATA}
-
-    @_("WORD words")
-    def words(self, p):
-        return [p.WORD] + p.words
-
-    @_("WORD")
-    def words(self, p):
-        return [p.WORD]
 
 
 TODO_REGEX = re.compile(
