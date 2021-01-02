@@ -35,3 +35,6 @@ alias todo='nvim ~/.todo'`
 
 
 ## TODO
+
+- [ ] Include sly into installation
+- [ ] Implement filtering

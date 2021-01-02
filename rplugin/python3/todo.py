@@ -82,7 +82,7 @@ class TodoPlugin(object):
             item = TodoItem(creation_date=dt.date.today())
             line = str(item)
             self._nvim.current.line = line
-            self._nvim.funcs.cursor(0, len(line) + 1) # TODO
+            self._nvim.funcs.cursor(0, len(line) + 1)
 
     def parse_todo_items(self) -> [TodoItem]:
         todos = []
