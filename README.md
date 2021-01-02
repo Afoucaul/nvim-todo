@@ -8,6 +8,7 @@ For convenience, this works with files matching `*.todo`.
 
 - Parse text lines respecting [todo.txt format](https://github.com/todotxt/todo.txt)
 - Smart ordering: higher-priority stuff first, done stuff last
+- Smart highlighting: higher-priority in red, done in dark gray
 - Mark/unmark as done with `<cr>` (`return`)
 - Auto date completion on item creation
 
