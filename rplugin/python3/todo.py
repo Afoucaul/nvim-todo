@@ -107,7 +107,7 @@ class TodoLexer(sly.Lexer):
 
     ignore = " \t\n\r"
 
-    X = r"x"
+    X = r"x\s"
     PRIORITY = r"\([A-Z]\)"
     DATE = r"\d{4}-\d{2}-\d{2}"
     PROJECT_TAG = r"\+\w+"

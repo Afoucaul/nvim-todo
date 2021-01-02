@@ -10,7 +10,7 @@ syntax match todotxtPriorityA "\v^(x )?\s*\(A\).*$" contains=ALL
 syntax match todotxtPriorityB "\v^(x )?\s*\(B\).*$" contains=ALL
 syntax match todotxtPriorityC "\v^(x )?\s*\(C\).*$" contains=ALL
 
-syntax match todotxtDone "\vx.*$"
+syntax match todotxtDone "\vx .*$"
 
 
 hi def todotxtpriorityA ctermfg=DarkRed
