@@ -3,6 +3,8 @@
 User interface to todo.txt files.
 For convenience, this works with files matching `*.todo`.
 
+![Screenshot](https://github.com/Afoucaul/nvim-todo/blob/master/screenshots/screenshots.png?raw=true)
+
 
 ## Features
 
