@@ -43,7 +43,9 @@ class TodoItem:
         lexer = TodoLexer()
         parser = TodoParser()
         try:
-            return parser.parse(lexer.tokenize(string.strip()))
+            result = parser.parse(lexer.tokenize(string.strip()))
+            if result.done and result.creation_date and not result.completion_date:
+                result.completion_date = dt.date.today()
         except:
             return None
 
