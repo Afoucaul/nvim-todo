@@ -2,18 +2,25 @@ if exists("b:current_syntax")
     finish
 endif
 
-hi def todoDone ctermfg=darkgray
+syntax match todotxtContextTag "\v\@\S+"
+syntax match todotxtProjectTag "\v\+\S+"
+syntax match todotxtMetadataEntry "\v\S+:\S+"
 
-hi def priorityA ctermfg=darkred
-hi def priorityB ctermfg=yellow
-hi def priorityC ctermfg=green
+syntax match todotxtPriorityA "\v^(x )?\s*\(A\).*$" contains=ALL
+syntax match todotxtPriorityB "\v^(x )?\s*\(B\).*$" contains=ALL
+syntax match todotxtPriorityC "\v^(x )?\s*\(C\).*$" contains=ALL
 
-syntax match priorityA "\v^(x )?\s*\(A\).*$"
-syntax match priorityB "\v^(x )?\s*\(B\).*$"
-syntax match priorityC "\v^(x )?\s*\(C\).*$"
+syntax match todotxtDone "\vx.*$"
 
-syntax match todoDone "\vx.*$"
 
-echom "Set colors"
+hi def todotxtpriorityA ctermfg=DarkRed
+hi def todotxtpriorityB ctermfg=DarkYellow
+hi def todotxtpriorityC ctermfg=DarkGreen
+
+hi def todotxtDone ctermfg=darkgray gui=strikethrough
+
+hi def todotxtContextTag ctermfg=LightBlue
+hi def todotxtProjectTag ctermfg=Magenta
+hi def todotxtMetadataEntry ctermfg=DarkBlue
 
 let b:current_syntax = "todotxt"

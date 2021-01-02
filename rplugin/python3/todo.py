@@ -52,34 +52,46 @@ class TodoItem:
 class TodoPlugin(object):
     def __init__(self, nvim: neovim.Nvim):
         self._nvim = nvim
-        self._todos = []
 
     @neovim.command("TodoParse")
     def todo_parse(self):
         todo = TodoItem.from_string(self._nvim.current.line)
         self._nvim.out_write(f"{todo}\n")
 
-    # @neovim.autocmd("TextChange", pattern="*todo.txt", sync=True)
-    # def on_text_change(self):
-    #     self.parse_todo_items()
+    @neovim.command("TodoToggle", sync=True)
+    def todo_toggle(self):
+        item = TodoItem.from_string(self._nvim.current.line)
+        item.done = not item.done
+        item.completion_date = dt.date.today() if item.done else None
+        self._nvim.current.line = str(item)
+        self.todo_sort()
 
-    @neovim.autocmd("BufWrite", pattern="*todo.txt", sync=True)
-    @neovim.autocmd("BufEnter", pattern="*todo.txt", sync=True)
+    @neovim.command("TodoSort")
+    def todo_sort(self):
+        todos = self.parse_todo_items()
+        todos.sort(key=str)
+        self._nvim.current.buffer[:] = [str(item) for item in todos]
+
+    @neovim.autocmd("BufWrite", pattern="*.todo", sync=True)
     def on_write(self):
-        self.parse_todo_items()
-        self._nvim.current.buffer[:] = [str(item) for item in self._todos]
+        self.todo_sort()
 
-    def parse_todo_items(self):
-        self._todos = []
+    @neovim.autocmd("InsertEnter", pattern="*.todo", sync=False)
+    def on_insert_enter(self):
+        if not self._nvim.current.line:
+            item = TodoItem(creation_date=dt.date.today())
+            line = str(item)
+            self._nvim.current.line = line
+            self._nvim.funcs.cursor(0, len(line) + 1) # TODO
+
+    def parse_todo_items(self) -> [TodoItem]:
+        todos = []
         for line in self._nvim.current.buffer:
             todo_item = TodoItem.from_string(line)
             if todo_item is not None:
-                self._todos.append(todo_item)
+                todos.append(todo_item)
 
-        self._todos.sort(key=str)
-
-        with open("/tmp/a", "w") as fd:
-            fd.write("\n".join(map(format, self._todos)))
+        return todos
 
 
 class TodoLexer(sly.Lexer):
