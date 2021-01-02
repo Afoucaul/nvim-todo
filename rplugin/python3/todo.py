@@ -17,6 +17,70 @@ class TodoItem:
     completion_date: dt.date = None
     priority: str = None
 
+    def __str__(self):
+        segments = []
+
+        if self.done:
+            segments.append("x")
+        if self.priority is not None:
+            segments.append(f"({self.priority})")
+        if self.completion_date is not None:
+            segments.append(self.completion_date)
+        if self.creation_date is not None:
+            segments.append(self.creation_date)
+        segments.append(self.description)
+        for tag in (self.project_tags or []):
+            segments.append(tag)
+        for tag in (self.context_tags or []):
+            segments.append(tag)
+        for key, value in (self.metadata or {}).items():
+            segments.append(f"{key}:{value}")
+
+        return " ".join(map(format, segments))
+
+    @classmethod
+    def from_string(cls, string):
+        lexer = TodoLexer()
+        parser = TodoParser()
+        try:
+            return parser.parse(lexer.tokenize(string.strip()))
+        except:
+            return None
+
+
+@neovim.plugin
+class TodoPlugin(object):
+    def __init__(self, nvim: neovim.Nvim):
+        self._nvim = nvim
+        self._todos = []
+
+    @neovim.command("TodoParse")
+    def todo_parse(self):
+        todo = TodoItem.from_string(self._nvim.current.line)
+        self._nvim.out_write(f"{todo}\n")
+
+    # @neovim.autocmd("TextChange", pattern="*todo.txt", sync=True)
+    # def on_text_change(self):
+    #     self.parse_todo_items()
+
+    @neovim.autocmd("BufWrite", pattern="*todo.txt", sync=True)
+    @neovim.autocmd("BufEnter", pattern="*todo.txt", sync=True)
+    def on_write(self):
+        self.parse_todo_items()
+        self._nvim.current.buffer[:] = [str(item) for item in self._todos]
+
+    def parse_todo_items(self):
+        self._todos = []
+        for line in self._nvim.current.buffer:
+            todo_item = TodoItem.from_string(line)
+            if todo_item is not None:
+                self._todos.append(todo_item)
+
+        self._todos.sort(key=str)
+
+        with open("/tmp/a", "w") as fd:
+            fd.write("\n".join(map(format, self._todos)))
+
 
 class TodoLexer(sly.Lexer):
     tokens = {
@@ -37,7 +101,7 @@ class TodoLexer(sly.Lexer):
     PROJECT_TAG = r"\+\w+"
     CONTEXT_TAG = r"@\w+"
     METADATA = r"\w+:\w+"
-    WORD = r"\w+"
+    WORD = r"[^@+]\S+"
 
     def METADATA(self, token):
         key, value = token.value.split(":")
@@ -136,7 +200,7 @@ class TodoParser(sly.Parser):
     @_("DATE")
     def dates(self, p):
         return {
-            "completion_date": p.DATE,
+            "creation_date": p.DATE,
         }
 
     @_("DATE DATE")
@@ -149,7 +213,7 @@ class TodoParser(sly.Parser):
     @_("words")
     def description(self, p):
         return {
-            "description": p.words
+            "description": " ".join(p.words)
         }
 
     @_("WORD words")
@@ -183,42 +247,3 @@ TODO_REGEX = re.compile(
     r"(?:(?P<completion_date>\d{4}-\d{2}-\d{2}) )?\s*"
     r"(?:(?P<creation_date>\d{4}-\d{2}-\d{2}) )?\s*"
 )
-
-
-def parse_todo_line(line):
-    lexer = TodoLexer()
-    parser = TodoParser()
-    result = parser.parse(lexer.tokenize(line))
-    return result
-    # return {
-    #     "done": False,
-    #     "priority": None,
-    #     "completion_date": None,
-    #     "creation_date": None,
-    #     "description": "",
-    #     "project_tags": set(),
-    #     "context_tags": set(),
-    #     "metadata": {},
-    # }
-
-
-
-
-@neovim.plugin
-class TodoPlugin(object):
-    def __init__(self, nvim: neovim.Nvim):
-        self._nvim = nvim
-
-    @neovim.command("TodoHello")
-    def todo_hello(self):
-        self._nvim.current.line = "hello"
-
-    @neovim.autocmd("BufEnter", pattern="*todo.txt")
-    def on_enter(self):
-        pass
-
-
-if __name__ == "__main__":
-    import sys
-    line = " ".join(sys.argv[1:])
-    print(parse_todo_line(line))
