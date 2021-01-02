@@ -17,7 +17,7 @@ For convenience, this works with files matching `*.todo`.
 
 ## Installation
 
-Install sly for python:
+Install [sly](https://sly.readthedocs.io/en/latest/sly.html) for python (used to parse todo lines):
 
 ```bash
 pip3 install sly
