@@ -8,7 +8,7 @@ For convenience, this works with files matching `*.todo`.
 
 - Parse text lines respecting [todo.txt format](https://github.com/todotxt/todo.txt)
 - Smart ordering: higher-priority stuff first, done stuff last
-- Mark/unmark as done with `return`
+- Mark/unmark as done with `<cr>` (`return`)
 - Auto date completion on item creation
 
 
@@ -38,3 +38,4 @@ alias todo='nvim ~/.todo'`
 
 - [ ] Include sly into installation
 - [ ] Implement filtering
+- [ ] Insert creation date upon `<cr>` in insert mode
