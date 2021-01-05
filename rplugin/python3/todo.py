@@ -10,9 +10,9 @@ import sly
 class TodoItem:
     done: bool = False
     description: str = ""
-    project_tags: [str] = None
-    context_tags: [str] = None
-    metadata: {str: str} = None
+    project_tags: [str] = dc.field(default_factory=list)
+    context_tags: [str] = dc.field(default_factory=list)
+    metadata: {str: str} = dc.field(default_factory=dict)
     creation_date: dt.date = None
     completion_date: dt.date = None
     priority: str = None
@@ -83,14 +83,32 @@ class TodoPlugin(object):
         self._nvim.current.buffer[:] = [str(item) for item in todos]
 
     @neovim.command("TodoSearch", nargs="+")
-    def todo_search(self, *args):
+    def todo_search(self, args):
         search_result = self.search(*args)
-        # self._nvim.show_in_new_split(search_result)
+        self._nvim.out_write(f"{search_result}\n")
 
     def search(self, *args):
         todo_items = self.parse_todo_items()
         for arg in args:
-            pass
+            if arg.startswith("@"):
+                todo_items = [
+                    item
+                    for item in todo_items
+                    if arg in item.context_tags
+                ]
+            elif arg.startswith("+"):
+                todo_items = [
+                    item
+                    for item in todo_items
+                    if arg in item.project_tags
+                ]
+            elif re.match(r"[\w-]+:[\w-]+", arg):
+                key, value = arg.split(":")
+                todo_items = [
+                    item
+                    for item in todo_items
+                    if item.metadata.get(key) == value
+                ]
 
         return todo_items
 
