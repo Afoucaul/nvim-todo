@@ -46,6 +46,7 @@ class TodoItem:
             result = parser.parse(lexer.tokenize(string.strip()))
             if result.done and result.creation_date and not result.completion_date:
                 result.completion_date = dt.date.today()
+            return result
         except:
             return None
 
@@ -253,11 +254,3 @@ class TodoParser(sly.Parser):
     @_("METADATA")
     def tags(self, p):
         return {"metadata": p.METADATA}
-
-
-TODO_REGEX = re.compile(
-    r"(?:(?P<done>^|^x) )?\s*"
-    r"(?:\(?P<priority>[A-Z]\) )?\s*"
-    r"(?:(?P<completion_date>\d{4}-\d{2}-\d{2}) )?\s*"
-    r"(?:(?P<creation_date>\d{4}-\d{2}-\d{2}) )?\s*"
-)
