@@ -1,1 +1,1 @@
-autocmd FileType todotxt nnoremap <cr> TodoToggle
+autocmd FileType todotxt nnoremap <cr> :TodoToggle<cr>
