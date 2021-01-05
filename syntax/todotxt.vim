@@ -15,12 +15,12 @@ syntax match todotxtDone "\v^x .*$"
 
 hi def todotxtpriorityA ctermfg=DarkRed
 hi def todotxtpriorityB ctermfg=DarkYellow
-hi def todotxtpriorityC ctermfg=DarkGreen
+hi def todotxtpriorityC ctermfg=Gray
 
 hi def todotxtDone ctermfg=darkgray gui=strikethrough
 
-hi def todotxtContextTag ctermfg=LightBlue
-hi def todotxtProjectTag ctermfg=Magenta
-hi def todotxtMetadataEntry ctermfg=DarkBlue
+hi def todotxtContextTag ctermfg=LightBlue ctermbg=Black
+hi def todotxtProjectTag ctermfg=Magenta ctermbg=Black
+hi def todotxtMetadataEntry ctermfg=DarkBlue ctermbg=Black
 
 let b:current_syntax = "todotxt"
