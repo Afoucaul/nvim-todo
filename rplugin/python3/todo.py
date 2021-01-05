@@ -85,7 +85,10 @@ class TodoPlugin(object):
     @neovim.command("TodoSearch", nargs="+")
     def todo_search(self, args):
         search_result = self.search(*args)
-        self._nvim.out_write(f"{search_result}\n")
+        if search_result:
+            lines = "\n".join(map(str, search_result))
+            command = f"echo '{lines}'\n"
+            self._nvim.command(command)
 
     def search(self, *args):
         todo_items = self.parse_todo_items()
