@@ -56,6 +56,13 @@ class TodoPlugin(object):
     def __init__(self, nvim: neovim.Nvim):
         self._nvim = nvim
 
+    @neovim.command("TodoLex")
+    def todo_lex(self):
+        line = self._nvim.current.line
+        lexer = TodoLexer()
+        tokens = lexer.tokenize(line)
+        self._nvim.out_write(f"{list(tokens)}\n")
+
     @neovim.command("TodoParse")
     def todo_parse(self):
         todo = TodoItem.from_string(self._nvim.current.line)
@@ -74,6 +81,18 @@ class TodoPlugin(object):
         todos = self.parse_todo_items()
         todos.sort(key=str)
         self._nvim.current.buffer[:] = [str(item) for item in todos]
+
+    @neovim.command("TodoSearch", nargs="+")
+    def todo_search(self, *args):
+        search_result = self.search(*args)
+        # self._nvim.show_in_new_split(search_result)
+
+    def search(self, *args):
+        todo_items = self.parse_todo_items()
+        for arg in args:
+            pass
+
+        return todo_items
 
     @neovim.autocmd("BufWrite", pattern="*.todo", sync=True)
     def on_write(self):
@@ -113,10 +132,10 @@ class TodoLexer(sly.Lexer):
     X = r"x\s"
     PRIORITY = r"\([A-Z]\)"
     DATE = r"\d{4}-\d{2}-\d{2}"
-    PROJECT_TAG = r"\+\w+"
-    CONTEXT_TAG = r"@\w+"
-    METADATA = r"\w+:\w+"
-    WORD = r"[^@+]\S+"
+    PROJECT_TAG = r"\+[\w-]+"
+    CONTEXT_TAG = r"@[\w-]+"
+    METADATA = r"[\w-]+:[\w-]+"
+    WORD = r"[^@+\s]\S*"
 
     def METADATA(self, token):
         key, value = token.value.split(":")
