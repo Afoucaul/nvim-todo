@@ -122,7 +122,15 @@ class TodoPlugin(object):
     @neovim.autocmd("InsertEnter", pattern="*.todo", sync=False)
     def on_insert_enter(self):
         if not self._nvim.current.line:
-            item = TodoItem(creation_date=dt.date.today())
+            item = TodoItem(creation_date=dt.date.today(), priority="C")
+            line = str(item)
+            self._nvim.current.line = line
+            self._nvim.funcs.cursor(0, len(line) + 1)
+
+    @neovim.autocmd("TextChangedI", pattern="*.todo", sync=False)
+    def on_text_changed_i(self):
+        if not self._nvim.current.line:
+            item = TodoItem(creation_date=dt.date.today(), priority="C")
             line = str(item)
             self._nvim.current.line = line
             self._nvim.funcs.cursor(0, len(line) + 1)
