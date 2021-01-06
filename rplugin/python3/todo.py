@@ -8,6 +8,8 @@ import sly
 
 @dc.dataclass
 class TodoItem:
+    PRIORITY = ["A", "B", "C"]
+
     done: bool = False
     description: str = ""
     project_tags: [str] = dc.field(default_factory=list)
@@ -37,6 +39,20 @@ class TodoItem:
             segments.append(f"{key}:{value}")
 
         return " ".join(map(format, segments))
+
+    def increase_priority(self):
+        if self.priority is None:
+            self.priority = "A"
+        else:
+            priority_i = self.PRIORITY.index(self.priority) - 1
+            self.priority = self.PRIORITY[max(priority_i, 0)]
+
+    def decrease_priority(self):
+        if self.priority is None:
+            self.priority = "C"
+        else:
+            priority_i = self.PRIORITY.index(self.priority) + 1
+            self.priority = self.PRIORITY[min(priority_i, len(self.PRIORITY))]
 
     @classmethod
     def from_string(cls, string):
@@ -76,11 +92,15 @@ class TodoPlugin(object):
         self._nvim.current.line = str(item)
         self.todo_sort()
 
-    @neovim.command("TodoSort")
+    @neovim.command("TodoSort", sync=True)
     def todo_sort(self):
-        todos = self.parse_todo_items()
-        todos.sort(key=str)
-        self._nvim.current.buffer[:] = [str(item) for item in todos]
+        cursor_todo = TodoItem.from_string(self._nvim.current.line)
+        todos = sorted(self.parse_todo_items(), key=str)
+        self._nvim.current.buffer[:] = [str(todo) for todo in todos]
+        for i, todo in enumerate(todos, 1):
+            if todo == cursor_todo:
+                self._nvim.funcs.cursor(i, 1)
+                break
 
     @neovim.command("TodoSearch", nargs="+")
     def todo_search(self, args):
@@ -89,6 +109,40 @@ class TodoPlugin(object):
             lines = "\n".join(map(str, search_result))
             command = f"echo '{lines}'\n"
             self._nvim.command(command)
+
+    @neovim.command("TodoPriorityUp", sync=True)
+    def todo_priority_up(self):
+        item = TodoItem.from_string(self._nvim.current.line)
+        item.increase_priority()
+        self._nvim.current.line = str(item)
+        self.todo_sort()
+
+    @neovim.command("TodoPriorityDown", sync=True)
+    def todo_priority_down(self):
+        item = TodoItem.from_string(self._nvim.current.line)
+        item.decrease_priority()
+        self._nvim.current.line = str(item)
+        self.todo_sort()
+
+    @neovim.autocmd("BufWrite", pattern="*.todo", sync=True)
+    def on_write(self):
+        self.todo_sort()
+
+    @neovim.autocmd("InsertEnter", pattern="*.todo", sync=False)
+    def on_insert_enter(self):
+        if not self._nvim.current.line:
+            item = TodoItem(creation_date=dt.date.today(), priority="C")
+            line = str(item)
+            self._nvim.current.line = line
+            self._nvim.funcs.cursor(0, len(line) + 1)
+
+    @neovim.autocmd("TextChangedI", pattern="*.todo", sync=False)
+    def on_text_changed_i(self):
+        if not self._nvim.current.line:
+            item = TodoItem(creation_date=dt.date.today(), priority="C")
+            line = str(item)
+            self._nvim.current.line = line
+            self._nvim.funcs.cursor(0, len(line) + 1)
 
     def search(self, *args):
         todo_items = self.parse_todo_items()
@@ -114,26 +168,6 @@ class TodoPlugin(object):
                 ]
 
         return todo_items
-
-    @neovim.autocmd("BufWrite", pattern="*.todo", sync=True)
-    def on_write(self):
-        self.todo_sort()
-
-    @neovim.autocmd("InsertEnter", pattern="*.todo", sync=False)
-    def on_insert_enter(self):
-        if not self._nvim.current.line:
-            item = TodoItem(creation_date=dt.date.today(), priority="C")
-            line = str(item)
-            self._nvim.current.line = line
-            self._nvim.funcs.cursor(0, len(line) + 1)
-
-    @neovim.autocmd("TextChangedI", pattern="*.todo", sync=False)
-    def on_text_changed_i(self):
-        if not self._nvim.current.line:
-            item = TodoItem(creation_date=dt.date.today(), priority="C")
-            line = str(item)
-            self._nvim.current.line = line
-            self._nvim.funcs.cursor(0, len(line) + 1)
 
     def parse_todo_items(self) -> [TodoItem]:
         todos = []
