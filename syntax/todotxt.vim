@@ -3,6 +3,7 @@ if exists("b:current_syntax")
 endif
 
 syntax match todotxtContextTag "\v(\s)@<=\@\S+"
+syntax match todotxtOverdueTag "\v(\s)@<=\@overdue"
 syntax match todotxtProjectTag "\v(\s)@<=\+\S+"
 syntax match todotxtMetadataEntry "\v\S+:\S+"
 
@@ -19,6 +20,7 @@ hi def todotxtpriorityC ctermfg=Gray
 
 hi def todotxtDone ctermfg=darkgray gui=strikethrough
 
+hi def todotxtOverdueTag ctermfg=DarkRed ctermbg=Black
 hi def todotxtContextTag ctermfg=LightBlue ctermbg=Black
 hi def todotxtProjectTag ctermfg=Magenta ctermbg=Black
 hi def todotxtMetadataEntry ctermfg=DarkBlue ctermbg=Black
