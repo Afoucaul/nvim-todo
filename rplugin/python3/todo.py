@@ -82,11 +82,15 @@ class TodoPlugin(object):
     @neovim.command("TodoParse")
     def todo_parse(self):
         todo = TodoItem.from_string(self._nvim.current.line)
-        self._nvim.out_write(f"{todo}\n")
+        self._nvim.out_write(f"Todo object: {todo}\n")
 
     @neovim.command("TodoToggle", sync=True)
     def todo_toggle(self):
         item = TodoItem.from_string(self._nvim.current.line)
+        if item is None:
+            self._nvim.out_write("Invalid todo format\n")
+            return
+
         item.done = not item.done
         item.completion_date = dt.date.today() if item.done else None
         self._nvim.current.line = str(item)
@@ -97,10 +101,13 @@ class TodoPlugin(object):
         cursor_todo = TodoItem.from_string(self._nvim.current.line)
         todos = sorted(self.parse_todo_items(), key=str)
         self._nvim.current.buffer[:] = [str(todo) for todo in todos]
-        for i, todo in enumerate(todos, 1):
-            if todo == cursor_todo:
-                self._nvim.funcs.cursor(i, 1)
-                break
+
+        # Move cursor to previously hovered item
+        if cursor_todo is not None:
+            for i, todo in enumerate(todos, 1):
+                if todo == cursor_todo:
+                    self._nvim.funcs.cursor(i, 1)
+                    break
 
     @neovim.command("TodoSearch", nargs="+")
     def todo_search(self, args):
@@ -113,6 +120,10 @@ class TodoPlugin(object):
     @neovim.command("TodoPriorityUp", sync=True)
     def todo_priority_up(self):
         item = TodoItem.from_string(self._nvim.current.line)
+        if item is None:
+            self._nvim.out_write("Invalid todo format\n")
+            return
+
         item.increase_priority()
         self._nvim.current.line = str(item)
         self.todo_sort()
@@ -120,6 +131,10 @@ class TodoPlugin(object):
     @neovim.command("TodoPriorityDown", sync=True)
     def todo_priority_down(self):
         item = TodoItem.from_string(self._nvim.current.line)
+        if item is None:
+            self._nvim.out_write("Invalid todo format\n")
+            return
+
         item.decrease_priority()
         self._nvim.current.line = str(item)
         self.todo_sort()
