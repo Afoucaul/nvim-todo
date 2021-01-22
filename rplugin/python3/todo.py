@@ -95,18 +95,20 @@ class TodoPlugin(object):
         item.completion_date = dt.date.today() if item.done else None
         self._nvim.current.line = str(item)
 
-        go_back_to_previous_position = not item.done
-        self.todo_sort(go_back_to_previous_position=go_back_to_previous_position)
+        self.todo_sort()
 
     @neovim.command("TodoSort", sync=True)
-    def todo_sort(self, *, go_back_to_previous_position=True):
+    def todo_sort(self):
         cursor_todo = TodoItem.from_string(self._nvim.current.line)
         todos = sorted(self.parse_todo_items(), key=str)
         self._nvim.current.buffer[:] = [str(todo) for todo in todos]
 
         # Move cursor to previously hovered item
-        if go_back_to_previous_position and cursor_todo is not None:
+        current_row = self._nvim.funcs.getpos(".")[1]
+        if cursor_todo is not None:
             for i, todo in enumerate(todos, 1):
+                if i > current_row:
+                    break
                 if todo == cursor_todo:
                     self._nvim.funcs.cursor(i, 1)
                     break
