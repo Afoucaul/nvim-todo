@@ -340,7 +340,11 @@ class TodoParser(sly.Parser):
 
     @_("tags tags")
     def tags(self, p):
-        return {**p.tags0, **p.tags1}
+        return {
+            "project_tags": p.tags0.get("project_tags", []) + p.tags1.get("project_tags", []),
+            "context_tags": p.tags0.get("context_tags", []) + p.tags1.get("context_tags", []),
+            "metadata": {**p.tags0.get("metadata", {}), **p.tags1.get("metadata", {})},
+        }
 
     @_("PROJECT_TAG")
     def tags(self, p):
@@ -352,4 +356,5 @@ class TodoParser(sly.Parser):
 
     @_("METADATA")
     def tags(self, p):
-        return {"metadata": p.METADATA}
+        key, value = p.METADATA.split(":")
+        return {"metadata": {key: value}}
