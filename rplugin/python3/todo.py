@@ -1,3 +1,5 @@
+from typing import Dict, List, Optional
+
 import dataclasses as dc
 import datetime as dt
 import re
@@ -12,12 +14,12 @@ class TodoItem:
 
     done: bool = False
     description: str = ""
-    project_tags: [str] = dc.field(default_factory=list)
-    context_tags: [str] = dc.field(default_factory=list)
-    metadata: {str: str} = dc.field(default_factory=dict)
-    creation_date: dt.date = None
-    completion_date: dt.date = None
-    priority: str = None
+    project_tags: List[str] = dc.field(default_factory=list)
+    context_tags: List[str] = dc.field(default_factory=list)
+    metadata: Dict[str, str] = dc.field(default_factory=dict)
+    creation_date: Optional[dt.date] = None
+    completion_date: Optional[dt.date] = None
+    priority: Optional[str] = None
 
     def __str__(self):
         segments = []
@@ -31,11 +33,11 @@ class TodoItem:
         if self.creation_date is not None:
             segments.append(self.creation_date)
         segments.append(self.description)
-        for tag in (self.project_tags or []):
+        for tag in self.project_tags:
             segments.append(tag)
-        for tag in (self.context_tags or []):
+        for tag in self.context_tags:
             segments.append(tag)
-        for key, value in (self.metadata or {}).items():
+        for key, value in self.metadata.items():
             segments.append(f"{key}:{value}")
 
         return " ".join(map(format, segments))
